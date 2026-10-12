@@ -67,9 +67,44 @@ def list_tasks():
 
     for row in rows:
         task_id, title, category, deadline, status = row
-        table.add_row(str(task_id), title, category, deadline, status)
+        status_styled = f"[green]{status}[/green]" if status == "Done" else f"[orange1]{status}[/orange1]"
+        table.add_row(str(task_id), title, category, deadline, status_styled)
 
     console.print(table)
+
+@app.command("complete-task")
+def complete_task(
+    task_id: int = typer.Option(..., "--id", "-i", help="ID tugas yang ingin diselesaikan")
+):
+    """Mengubah status tugas menjadi 'Done' berdasarkan ID."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tasks SET status = 'Done' WHERE id = ?", (task_id,))
+    
+    if cursor.rowcount == 0:
+        console.print(f"[bold red]❌ Gagal![/bold red] Tugas dengan ID [yellow]{task_id}[/yellow] tidak ditemukan.")
+    else:
+        conn.commit()
+        console.print(f"[bold green]✔ Berhasil![/bold green] Tugas dengan ID [yellow]{task_id}[/yellow] diubah menjadi [green]Done[/green].")
+    
+    conn.close()
+
+@app.command("delete-task")
+def delete_task(
+    task_id: int = typer.Option(..., "--id", "-i", help="ID tugas yang ingin dihapus")
+):
+    """Menghapus tugas dari database berdasarkan ID."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    
+    if cursor.rowcount == 0:
+        console.print(f"[bold red]❌ Gagal![/bold red] Tugas dengan ID [yellow]{task_id}[/yellow] tidak ditemukan.")
+    else:
+        conn.commit()
+        console.print(f"[bold red]🗑 Dihapus![/bold red] Tugas dengan ID [yellow]{task_id}[/yellow] berhasil dihapus dari database.")
+    
+    conn.close()
 
 if __name__ == "__main__":
     app()
