@@ -4,12 +4,11 @@ from rich.table import Table
 import sqlite3
 import os
 
-app = typer.Typer(help="Zenith CLI - Modul Finansial & Investasi")
+app = typer.Typer(help="Kelola pencatatan finansial dan investasi")
 console = Console()
 DB_PATH = "db/tracker.db"
 
 def init_finance_db():
-    """Membuat tabel finances jika belum tersedia di database."""
     os.makedirs("db", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -30,7 +29,7 @@ def get_connection():
     init_finance_db()
     return sqlite3.connect(DB_PATH)
 
-@app.command("add-finance")
+@app.command("add")
 def add_finance(
     title: str = typer.Option(..., "--title", "-t", help="Keterangan transaksi"),
     type: str = typer.Option(..., "--type", "-tp", help="Tipe: 'Masuk' atau 'Keluar'"),
@@ -48,10 +47,9 @@ def add_finance(
     conn.commit()
     conn.close()
     
-    color = "green" if type.lower() == "masuk" else "red"
     console.print(f"[bold green]✔ Sukses![/bold green] Transaksi '[cyan]{title}[/cyan]' senilai Rp {amount:,.0f} berhasil dicatat.")
 
-@app.command("list-finances")
+@app.command("list")
 def list_finances():
     """Menampilkan seluruh daftar transaksi finansial dalam bentuk tabel."""
     conn = get_connection()
@@ -61,7 +59,7 @@ def list_finances():
     conn.close()
 
     if not rows:
-        console.print("[yellow]Belum ada catatan finansial. Gunakan 'add-finance' untuk menambah.[/yellow]")
+        console.print("[yellow]Belum ada catatan finansial.[/yellow]")
         return
 
     table = Table(title="Laporan Finansial & Investasi Zenith CLI", header_style="bold cyan")
@@ -89,9 +87,6 @@ def list_finances():
 
     console.print(table)
     
-    # Ringkasan Saldo
     balance_color = "green" if total_balance >= 0 else "red"
     console.print(f"\n[bold]Total Estimasi Saldo/Aset:[/bold] [{balance_color}]Rp {total_balance:,.0f}[/{balance_color}]\n")
 
-if __name__ == "__main__":
-    app()
